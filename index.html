@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, initial-scale=1.0">
+    <title>동양먹거리 - 학교 근처 맛집 현황판</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 1920px;
+            height: 1080px;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .screen {
+            display: none;
+            width: 1920px;
+            height: 1080px;
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        /* 메인 화면 */
+        .main-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 1080px;
+            overflow: hidden;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 60px;
+        }
+
+        .header h1 {
+            font-size: 5em;
+            margin-bottom: 20px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+        }
+
+        .weather-info {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 25px 50px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            margin-top: 30px;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 60px;
+            width: 1600px;
+        }
+
+        .menu-btn {
+            background: white;
+            border: none;
+            border-radius: 30px;
+            padding: 80px 60px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .menu-btn:hover {
+            transform: translateY(-15px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+        }
+
+        .menu-btn .icon {
+            font-size: 7em;
+            margin-bottom: 30px;
+        }
+
+        .menu-btn h2 {
+            color: #667eea;
+            font-size: 2.8em;
+            margin-bottom: 15px;
+        }
+
+        .menu-btn p {
+            color: #666;
+            font-size: 1.6em;
+        }
+
+        /* 음식점 추천 화면 */
+        .restaurant-screen {
+            color: white;
+        }
+
+        .back-btn {
+            background: rgba(255,255,255,0.3);
+            color: white;
+            border: none;
+            padding: 25px 50px;
+            border-radius: 15px;
+            font-size: 2em;
+            cursor: pointer;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            font-weight: bold;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.5);
+            transform: scale(1.05);
+        }
+
+        .recommendation-section {
+            background: rgba(255,255,255,0.95);
+            border-radius: 30px;
+            padding: 50px;
+            color: #333;
+            height: 920px;
+            overflow-y: auto;
+        }
+
+        .ai-recommendation {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            margin-bottom: 40px;
+        }
+
+        .ai-recommendation h3 {
+            font-size: 2.8em;
+            margin-bottom: 20px;
+        }
+
+        .ai-recommendation p {
+            font-size: 1.6em;
+            line-height: 1.6;
+        }
+
+        .restaurant-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+        }
+
+        .restaurant-card {
+            background: white;
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .restaurant-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+        }
+
+        .restaurant-card h3 {
+            color: #667eea;
+            font-size: 2.2em;
+            margin-bottom: 15px;
+        }
+
+        .restaurant-card .category {
+            color: #ff6b6b;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .restaurant-card .info {
+            color: #666;
+            margin: 10px 0;
+            font-size: 1.3em;
+        }
+
+        .restaurant-card .rating {
+            color: #ffd700;
+            font-size: 1.8em;
+            margin: 15px 0;
+        }
+
+        /* 지도 화면 */
+        .map-screen {
+            color: white;
+        }
+
+        .map-screen h2 {
+            font-size: 4em;
+            margin-bottom: 30px;
+        }
+
+        .map-container {
+            background: rgba(255,255,255,0.95);
+            border-radius: 30px;
+            padding: 40px;
+            position: relative;
+            height: 850px;
+        }
+
+        .map-3d {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #e0f7fa 0%, #80deea 100%);
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .building {
+            position: absolute;
+            background: #546e7a;
+            border-radius: 8px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+            transition: all 0.3s ease;
+        }
+
+        .building:hover {
+            transform: scale(1.08);
+        }
+
+        .school {
+            width: 150px;
+            height: 150px;
+            background: #ff6b6b;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.8em;
+        }
+
+        .restaurant-marker {
+            position: absolute;
+            width: 90px;
+            height: 90px;
+            background: #4caf50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            cursor: pointer;
+            animation: bounce 2s infinite;
+            box-shadow: 0 10px 25px rgba(76,175,80,0.4);
+        }
+
+        .path {
+            position: absolute;
+            height: 8px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 4px;
+            animation: drawPath 2s ease-in-out infinite;
+            box-shadow: 0 2px 10px rgba(102,126,234,0.5);
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes drawPath {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
+        .route-info {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: white;
+            padding: 35px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            width: 400px;
+        }
+
+        .route-info h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 2em;
+        }
+
+        .route-info p {
+            color: #666;
+            margin: 10px 0;
+            font-size: 1.4em;
+            line-height: 1.6;
+        }
+
+        /* 음성 안내 화면 */
+        .voice-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 1080px;
+            color: white;
+            overflow: hidden;
+        }
+
+        .voice-container {
+            text-align: center;
+            background: rgba(255,255,255,0.1);
+            padding: 100px;
+            border-radius: 40px;
+            backdrop-filter: blur(10px);
+        }
+
+        .voice-icon {
+            font-size: 12em;
+            margin-bottom: 50px;
+            animation: pulse 2s infinite;
+        }
+
+        .voice-status {
+            font-size: 3.5em;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .voice-text {
+            font-size: 2.5em;
+            margin: 30px 0;
+            padding: 40px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .voice-controls {
+            display: flex;
+            gap: 40px;
+            margin-top: 50px;
+        }
+
+        .voice-btn {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 35px 70px;
+            border-radius: 20px;
+            font-size: 2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .voice-btn:hover {
+            transform: scale(1.08);
+            box-shadow: 0 15px 35px rgba(255,255,255,0.4);
+        }
+
+        .voice-btn.listening {
+            background: #ff6b6b;
+            color: white;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .accessibility-btn {
+            position: fixed;
+            bottom: 50px;
+            right: 50px;
+            width: 120px;
+            height: 120px;
+            background: #ff6b6b;
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 3.5em;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(255,107,107,0.5);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .accessibility-btn:hover {
+            transform: scale(1.15);
+            box-shadow: 0 15px 40px rgba(255,107,107,0.7);
+        }
+
+        /* 스크롤바 스타일 */
+        ::-webkit-scrollbar {
+            width: 15px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(102,126,234,0.6);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(102,126,234,0.8);
+        }
+    </style>
+</head>
+<body>
+    <!-- 메인 화면 -->
+    <div id="main-screen" class="screen main-screen active">
+        <div class="header">
+            <h1>🍽️ 동양먹거리</h1>
+            <p style="font-size: 1.3em;">학교 근처 맛집 현황판</p>
+            <div class="weather-info">
+                <span style="font-size: 2em;">📍 동양미래대학교</span>
+                <span style="font-size: 2em; margin-left: 40px;">🌤️ 맑음 18°C</span>
+                <span style="font-size: 2em; margin-left: 40px;">💨 서풍 2m/s</span>
+            </div>
+        </div>
+
+        <div class="menu-grid">
+            <button class="menu-btn" onclick="showRestaurants()">
+                <div class="icon">🏪</div>
+                <h2>AI 맛집 추천</h2>
+                <p>오늘의 날씨 기반 추천</p>
+            </button>
+
+            <button class="menu-btn" onclick="showMap()">
+                <div class="icon">🗺️</div>
+                <h2>3D 길안내</h2>
+                <p>최적 경로 안내</p>
+            </button>
+
+            <button class="menu-btn" onclick="showVoice()">
+                <div class="icon">🔊</div>
+                <h2>음성 안내</h2>
+                <p>시각장애인 지원</p>
+            </button>
+        </div>
+    </div>
+
+    <!-- 음식점 추천 화면 -->
+    <div id="restaurant-screen" class="screen restaurant-screen">
+        <button class="back-btn" onclick="showMain()">← 메인으로</button>
+
+        <div class="recommendation-section">
+            <div class="ai-recommendation">
+                <h3>🤖 AI 추천 맛집</h3>
+                <p>오늘 같이 화창하고 따뜻한 날씨에는 시원한 냉면이나 시원한 국물 요리를 추천드립니다!</p>
+                <p style="margin-top: 15px;">추천 이유: 기온 18°C, 맑은 날씨, 점심시간대</p>
+            </div>
+
+            <h2 style="color: #333; margin-bottom: 30px; font-size: 3em;">🍴 학교 근처 맛집</h2>
+
+            <div class="restaurant-list">
+                <div class="restaurant-card" onclick="selectRestaurant('평양냉면옥')">
+                    <h3>🥢 평양냉면옥</h3>
+                    <div class="category">한식 · 냉면</div>
+                    <div class="rating">⭐⭐⭐⭐⭐ 4.8</div>
+                    <div class="info">📍 도보 3분 (200m)</div>
+                    <div class="info">💰 평양냉면 9,000원</div>
+                    <div class="info">⏰ 영업중 (11:00-21:00)</div>
+                    <div class="info" style="color: #4caf50; font-weight: bold;">✅ AI 추천 1순위</div>
+                </div>
+
+                <div class="restaurant-card" onclick="selectRestaurant('김밥천국')">
+                    <h3>🍙 김밥천국</h3>
+                    <div class="category">분식 · 한식</div>
+                    <div class="rating">⭐⭐⭐⭐ 4.3</div>
+                    <div class="info">📍 도보 1분 (50m)</div>
+                    <div class="info">💰 참치김밥 3,500원</div>
+                    <div class="info">⏰ 영업중 (07:00-22:00)</div>
+                </div>
+
+                <div class="restaurant-card" onclick="selectRestaurant('맛나돈까스')">
+                    <h3>🍛 맛나돈까스</h3>
+                    <div class="category">일식 · 돈까스</div>
+                    <div class="rating">⭐⭐⭐⭐⭐ 4.6</div>
+                    <div class="info">📍 도보 5분 (350m)</div>
+                    <div class="info">💰 치즈돈까스 8,000원</div>
+                    <div class="info">⏰ 영업중 (11:00-20:00)</div>
+                </div>
+
+                <div class="restaurant-card" onclick="selectRestaurant('중화루')">
+                    <h3>🥟 중화루</h3>
+                    <div class="category">중식 · 짜장면</div>
+                    <div class="rating">⭐⭐⭐⭐ 4.4</div>
+                    <div class="info">📍 도보 4분 (280m)</div>
+                    <div class="info">💰 짜장면 6,000원</div>
+                    <div class="info">⏰ 영업중 (10:00-21:00)</div>
+                </div>
+
+                <div class="restaurant-card" onclick="selectRestaurant('버거킹')">
+                    <h3>🍔 버거킹</h3>
+                    <div class="category">패스트푸드 · 햄버거</div>
+                    <div class="rating">⭐⭐⭐⭐ 4.2</div>
+                    <div class="info">📍 도보 2분 (120m)</div>
+                    <div class="info">💰 와퍼세트 7,500원</div>
+                    <div class="info">⏰ 영업중 (09:00-23:00)</div>
+                </div>
+
+                <div class="restaurant-card" onclick="selectRestaurant('설빙')">
+                    <h3>🍧 설빙</h3>
+                    <div class="category">디저트 · 빙수</div>
+                    <div class="rating">⭐⭐⭐⭐⭐ 4.7</div>
+                    <div class="info">📍 도보 6분 (400m)</div>
+                    <div class="info">💰 망고치즈설빙 12,000원</div>
+                    <div class="info">⏰ 영업중 (11:00-22:00)</div>
+                    <div class="info" style="color: #4caf50; font-weight: bold;">✅ AI 디저트 추천</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 지도 화면 -->
+    <div id="map-screen" class="screen map-screen">
+        <button class="back-btn" onclick="showMain()">← 메인으로</button>
+
+        <h2>🗺️ 3D 길안내</h2>
+
+        <div class="map-container">
+            <div class="map-3d" id="map-3d">
+                <!-- 학교 건물 -->
+                <div class="building school">
+                    <div style="text-align: center; line-height: 150px; color: white; font-weight: bold;">🏫 학교</div>
+                </div>
+
+                <!-- 주변 건물들 -->
+                <div class="building" style="width: 120px; height: 120px; left: 20%; top: 20%; background: #78909c;"></div>
+                <div class="building" style="width: 90px; height: 150px; left: 70%; top: 15%; background: #90a4ae;"></div>
+                <div class="building" style="width: 130px; height: 100px; left: 15%; top: 70%; background: #78909c;"></div>
+                <div class="building" style="width: 100px; height: 130px; left: 75%; top: 75%; background: #90a4ae;"></div>
+
+                <!-- 음식점 마커 -->
+                <div class="restaurant-marker" style="left: 30%; top: 30%;" title="평양냉면옥">
+                    🥢
+                </div>
+                <div class="restaurant-marker" style="left: 65%; top: 40%;" title="맛나돈까스">
+                    🍛
+                </div>
+                <div class="restaurant-marker" style="left: 40%; top: 65%;" title="김밥천국">
+                    🍙
+                </div>
+
+                <!-- 경로 -->
+                <div class="path" style="width: 200px; left: calc(50% - 30px); top: calc(50% - 40px); transform: rotate(-45deg);"></div>
+                <div class="path" style="width: 120px; left: calc(50% - 120px); top: calc(50% - 130px); transform: rotate(-20deg);"></div>
+            </div>
+
+            <div class="route-info">
+                <h3>📍 평양냉면옥까지</h3>
+                <p style="font-size: 2.5em; font-weight: bold; color: #667eea;">도보 3분</p>
+                <p>거리: 200m</p>
+                <p>예상 소요시간: 2-4분</p>
+                <p style="margin-top: 20px; padding-top: 20px; border-top: 3px solid #eee;">
+                    <strong>🚶 경로:</strong><br>
+                    1. 정문으로 나가기<br>
+                    2. 왼쪽으로 100m 직진<br>
+                    3. 첫 번째 골목 우회전<br>
+                    4. 50m 직진 후 도착
+                </p>
+                <button style="margin-top: 25px; width: 100%; padding: 25px; background: #667eea; color: white; border: none; border-radius: 15px; font-size: 1.6em; cursor: pointer; font-weight: bold;" onclick="alert('음성 안내를 시작합니다!')">
+                    🔊 음성 안내 시작
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 음성 안내 화면 -->
+    <div id="voice-screen" class="screen voice-screen">
+        <button class="back-btn" onclick="showMain()">← 메인으로</button>
+
+        <div class="voice-container">
+            <div class="voice-icon" id="voice-icon">🎤</div>
+            <div class="voice-status" id="voice-status">음성 인식 대기중</div>
+            <div class="voice-text" id="voice-text">버튼을 눌러 말씀해주세요</div>
+
+            <div class="voice-controls">
+                <button class="voice-btn" id="listen-btn" onclick="startListening()">
+                    🎤 음성 인식 시작
+                </button>
+                <button class="voice-btn" onclick="stopListening()">
+                    ⏹️ 중지
+                </button>
+            </div>
+
+            <div style="margin-top: 60px; background: rgba(255,255,255,0.2); padding: 40px; border-radius: 25px;">
+                <h3 style="margin-bottom: 25px; font-size: 2.5em;">💡 사용 가능한 명령어</h3>
+                <p style="margin: 15px 0; font-size: 1.8em;">"맛집 추천해줘"</p>
+                <p style="margin: 15px 0; font-size: 1.8em;">"냉면집 찾아줘"</p>
+                <p style="margin: 15px 0; font-size: 1.8em;">"가까운 음식점"</p>
+                <p style="margin: 15px 0; font-size: 1.8em;">"평양냉면옥 길 안내"</p>
+                <p style="margin: 15px 0; font-size: 1.8em;">"메인 화면으로"</p>
+            </div>
+        </div>
+    </div>
+
+    <button class="accessibility-btn" onclick="showVoice()" title="음성 안내">🔊</button>
+
+    <script>
+        let isListening = false;
+        let recognitionTimeout;
+
+        function showMain() {
+            hideAllScreens();
+            document.getElementById('main-screen').classList.add('active');
+        }
+
+        function showRestaurants() {
+            hideAllScreens();
+            document.getElementById('restaurant-screen').classList.add('active');
+        }
+
+        function showMap() {
+            hideAllScreens();
+            document.getElementById('map-screen').classList.add('active');
+        }
+
+        function showVoice() {
+            hideAllScreens();
+            document.getElementById('voice-screen').classList.add('active');
+        }
+
+        function hideAllScreens() {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+        }
+
+        function selectRestaurant(name) {
+            if(confirm(`${name}으로 길안내를 시작할까요?`)) {
+                showMap();
+            }
+        }
+
+        function startListening() {
+            isListening = true;
+            const btn = document.getElementById('listen-btn');
+            const icon = document.getElementById('voice-icon');
+            const status = document.getElementById('voice-status');
+            const text = document.getElementById('voice-text');
+
+            btn.classList.add('listening');
+            btn.textContent = '🎤 듣고 있습니다...';
+            icon.textContent = '🔴';
+            status.textContent = '음성 인식 중...';
+            text.textContent = '말씀하세요...';
+
+            // 가짜 음성 인식 시뮬레이션
+            const responses = [
+                { text: "맛집 추천해줘", action: () => { setTimeout(showRestaurants, 1000); } },
+                { text: "냉면집 찾아줘", action: () => { setTimeout(showRestaurants, 1000); } },
+                { text: "길 안내", action: () => { setTimeout(showMap, 1000); } },
+                { text: "평양냉면옥 가는 길 알려줘", action: () => { setTimeout(showMap, 1000); } },
+                { text: "메인 화면으로", action: () => { setTimeout(showMain, 1000); } }
+            ];
+
+            const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+
+            recognitionTimeout = setTimeout(() => {
+                text.textContent = `"${randomResponse.text}"`;
+                status.textContent = '처리 중...';
+
+                setTimeout(() => {
+                    status.textContent = '명령을 실행합니다';
+                    stopListening();
+                    randomResponse.action();
+                }, 1000);
+            }, 2000);
+        }
+
+        function stopListening() {
+            isListening = false;
+            clearTimeout(recognitionTimeout);
+            const btn = document.getElementById('listen-btn');
+            const icon = document.getElementById('voice-icon');
+            const status = document.getElementById('voice-status');
+
+            btn.classList.remove('listening');
+            btn.textContent = '🎤 음성 인식 시작';
+            icon.textContent = '🎤';
+            status.textContent = '음성 인식 대기중';
+        }
+
+        // 페이지 로드 시 음성 안내
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if(confirm('음성 안내를 활성화하시겠습니까?')) {
+                    alert('동양먹거리에 오신 것을 환영합니다. 원하시는 메뉴를 선택하거나, 우측 하단의 음성 버튼을 눌러 음성으로 명령하실 수 있습니다.');
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>
